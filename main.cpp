@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <cmath>
 
 template <typename T>
 struct matrix
@@ -14,12 +15,44 @@ struct matrix
         data_(col_, std::vector<T>(row_))
     {}
 
+    matrix(const matrix<T>& m) :
+        col_ (m.col_),
+        row_ (m.row_),
+        data_(m.data_)
+    {}
+
+    matrix<T>& operator=(const matrix<T>& m);
     std::vector<T>& operator[](int col);
-    const matrix<T> operator-(const matrix<T>& m);
+    matrix<T> operator-(const matrix<T>& m) const;
+    matrix<T> operator+(const matrix<T>& m) const;
+    matrix<T> operator*(const matrix<T>& m) const;
 
     void input();
     void print();
 };
+
+template<typename T>
+matrix<T>& matrix<T>::operator=(const matrix<T>& m) {
+    if (this == &m) {
+		return *this;
+	}
+
+    if (col_ < m.col_ || row_ < m.row_) {
+        col_ = m.col_;
+        row_ = m.row_;
+        data_ = m.data_;
+
+        return *this;
+    }
+
+    for(int i = 0; i < m.col_; i++) {
+        for(int j = 0; j < m.row_; j++) {
+            data_[i][j] = m.data_[i][j];
+        }
+    }
+
+    return *this;
+}
 
 template<typename T>
 std::vector<T>& matrix<T>::operator[](int col) {
@@ -27,18 +60,46 @@ std::vector<T>& matrix<T>::operator[](int col) {
 }
 
 template<typename T>
-const matrix<T> matrix<T>::operator-(const matrix<T>& m) {
+matrix<T> matrix<T>::operator-(const matrix<T>& m) const {
     assert((*this).col_ == m.col_ && (*this).row_ == m.row_);
 
     matrix<T> res(m.col_, m.row_);
-    
+
     for (int i = 0; i < res.col_; i++) {
         for (int j = 0; j < res.row_; j++) {
-            res[i][j] = (*this)[i][j] - m.data_[i][j];
+            res[i][j] = (*this).data_[i][j] - m.data_[i][j];
         }
     }
 
     return res;
+}
+
+template<typename T>
+matrix<T> matrix<T>::operator+(const matrix<T>& m) const {
+    assert((*this).col_ == m.col_ && (*this).row_ == m.row_);
+
+    matrix<T> res(m.col_, m.row_);
+
+    for (int i = 0; i < res.col_; i++) {
+        for (int j = 0; j < res.row_; j++) {
+            res[i][j] = (*this).data_[i][j] + m.data_[i][j];
+        }
+    }
+
+    return res;
+}
+
+template<typename T>
+matrix<T> matrix<T>::operator*(const matrix<T>& m) const {
+    assert((*this).col_ == m.col_ && (*this).row_ == m.row_);
+
+    int n = get_new_dimension(*this, m);
+
+    matrix<T> A(n, n), B(n, n);
+    A = *this;
+    B = m;
+
+    return Strassen_multiplication(A, B);
 }
 
 template<typename T>
@@ -60,6 +121,16 @@ void matrix<T>::input() {
     }
 }
 
+template<typename T>
+int get_new_dimension(const matrix<T>& a, const matrix<T>& b) {
+    return 1 << int(ceil(log2f(std::max(std::max(a.col_, a.row_), std::max(b.col_, b.row_)))));
+}
+
+template<typename T>
+matrix<T> Strassen_multiplication(const matrix<T>& a, const matrix<T>& b) {
+    
+}
+
 int main() {
     int col, row;
 
@@ -70,7 +141,11 @@ int main() {
     a.input();
     b.input();
 
-    matrix<int> c = a - b;
+    matrix<int> c = a * b;
 
     c.print();
+
+    //std::vector<int> d = {1, 2, 3};
+
+    //std::cout << *d;
 }
