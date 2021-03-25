@@ -2,6 +2,7 @@
 #include <vector>
 #include <cassert>
 #include <cmath>
+#include <ctime>
 
 struct RECT {
     int row1, col1, row2, col2;
@@ -45,6 +46,7 @@ struct matrix {
     matrix<T> operator*(const matrix<T>& m) const;
 
     void input();
+    void random();
     void print();
 };
 
@@ -64,11 +66,24 @@ matrix<T> merge_square_matrices(matrix<T>* matrices[4]) {
 }
 
 template<typename T>
+matrix<T> multiplication(const matrix<T>& a, const matrix<T>& b) {
+    matrix<T> res(a.row_, b.col_);
+    
+    for (int i = 0; i < a.row_; i++) {
+        for (int j = 0; j < b.col_; j++) {
+            for (int elem = 0; elem < a.col_; elem++) {
+                res.data_[i][j] += a.data_[i][elem] * b.data_[elem][j];
+            }
+        }
+    }
+
+    return res;
+}
+
+template<typename T>
 matrix<T> Strassen_multiplication(const matrix<T>& a, const matrix<T>& b) {
-    if (a.col_ == 1) {
-        matrix<T> res = a;
-        res.data_[0][0] *= b.data_[0][0];
-        return res;
+    if (a.col_ < 64) {
+        return multiplication(a, b);
     }
     
     int half_size = a.col_ / 2;
@@ -162,6 +177,10 @@ template<typename T>
 matrix<T> matrix<T>::operator*(const matrix<T>& m) const {
     assert((*this).col_ == m.row_);
 
+    if (std::max(std::max(col_, m.col_), std::max(row_, m.row_)) < 64) {
+        return multiplication(*this, m);
+    }
+
     int n = get_new_dimension(*this, m);
 
     matrix<T> A(n, n), B(n, n);
@@ -181,6 +200,17 @@ void matrix<T>::print() {
         std::cout << std::endl;
     }
     std::cout << std::endl;
+}
+
+template<typename T>
+void matrix<T>::random() {
+    srand(time(0));
+
+    for (int i = 0; i < row_; i++) {
+        for (int j = 0; j < col_; j++) {
+            data_[i][j] = rand();
+        }
+    }
 }
 
 template<typename T>
@@ -205,10 +235,13 @@ int main() {
     std::cin >> row >> col;
     matrix<int> b(row, col);
 
-    a.input();
-    b.input();
+    a.random();
+    b.random();
 
+    double s1 = clock(), s2;
     matrix<int> c = a * b;
+    s2 = clock();
 
     c.print();
+    std::cout<<s2 - s1;
 }
