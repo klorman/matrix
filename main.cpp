@@ -11,13 +11,19 @@ struct RECT {
 template <typename T>
 struct matrix {
     int col_, row_;
-    std::vector<std::vector<T>> data_;
+    T** data_;
+    //std::vector<std::vector<T>> data_;
 
     matrix(int rows, int columns) :
         col_(columns), 
-        row_(rows), 
-        data_(row_, std::vector<T>(col_))
-    {}
+        row_(rows)
+        //data_(row_, std::vector<T>(col_))
+    {
+        data_ = new T * [row_];
+        for (int i = 0; i < row_; i++) {
+            data_[i] = new T [col_];
+        }
+    }
 
     matrix(const matrix<T>& m) :
         col_ (m.col_),
@@ -27,10 +33,14 @@ struct matrix {
 
     matrix(const matrix<T>& m, const RECT& rect) :
         col_ (rect.col2 - rect.col1 + 1),
-        row_ (rect.row2 - rect.row1 + 1),
-        data_(row_, std::vector<T>(col_))
+        row_ (rect.row2 - rect.row1 + 1)
+        //data_(row_, std::vector<T>(col_))
     {
         //assert(col_ < m.col_ && row_ < m.row_);
+        data_ = new T * [row_];
+        for (int i = 0; i < row_; i++) {
+            data_[i] = new T [col_];
+        }
 
         for (int i = rect.row1; i <= rect.row2; i++) {
             for (int j = rect.col1; j <= rect.col2; j++) {
@@ -39,8 +49,15 @@ struct matrix {
         }
     }
 
+    ~matrix() {
+        for (int i = 0; i < row_; i++) {
+            delete[] data_[i];
+        }
+        delete[] data_;
+    }
+
     matrix<T>& operator=(const matrix<T>& m);
-    std::vector<T>& operator[](int row);
+    T* operator[](int row);
     matrix<T> operator-(const matrix<T>& m) const;
     matrix<T> operator+(const matrix<T>& m) const;
     matrix<T> operator*(const matrix<T>& m) const;
@@ -82,7 +99,7 @@ matrix<T> multiplication(const matrix<T>& a, const matrix<T>& b) {
 
 template<typename T>
 matrix<T> Strassen_multiplication(const matrix<T>& a, const matrix<T>& b) {
-    if (a.col_ < 64) {
+    if (a.col_ < 164) {
         return multiplication(a, b);
     }
     
@@ -139,7 +156,7 @@ matrix<T>& matrix<T>::operator=(const matrix<T>& m) {
 }
 
 template<typename T>
-std::vector<T>& matrix<T>::operator[](int row) {
+T* matrix<T>::operator[](int row) {
     return data_[row];
 }
 
@@ -181,8 +198,8 @@ matrix<T> matrix<T>::operator*(const matrix<T>& m) const {
         return multiplication(*this, m);
     }
 
-    int n = get_new_dimension(*this, m);
-
+    //int n = get_new_dimension(*this, m);
+    int n = 1000;
     matrix<T> A(n, n), B(n, n);
     A = *this;
     B = m;
@@ -238,10 +255,11 @@ int main() {
     a.random();
     b.random();
 
+
     double s1 = clock(), s2;
     matrix<int> c = a * b;
     s2 = clock();
 
-    c.print();
+//    c.print();
     std::cout<<s2 - s1;
 }
